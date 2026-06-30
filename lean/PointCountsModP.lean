@@ -13,10 +13,28 @@ def compute_ap (p : ℕ) (h : Fact p.Prime) (a1 a2 a3 a4 a6 : ℤ) := (Finset.un
   letI y := xy.2
   y ^ 2 + a1 * x * y + a3 * y = x ^ 3 + a2 * x^2 + a4 * x + a6).card
 
--- the forward image is a set, not a multiset...
-def compute_ap' (p : ℕ) (h : Fact p.Prime) (a1 a2 a3 a4 a6 : ℤ) : Finset ℤ :=
+-- The output here is a Finset, not a Multiset...
+def compute_ap''' (p : ℕ) (h : Fact p.Prime) (a1 a2 a3 a4 a6 : ℤ) : Finset ℤ :=
   (Finset.univ.image fun x : (ZMod p) ↦
     (legendreSym p ((a1 * x.val + a3) ^ 2 + 4 * (x.val ^ 3 + a2 * x.val ^ 2 + a4 * x.val + a6))) + 1)
+
+-- The output here is a Multiset, finally...
+def compute_ap'' (p : ℕ) (h : Fact p.Prime) (a1 a2 a3 a4 a6 : ℤ) : Multiset ℤ :=
+  ((Finset.univ : Finset (ZMod p)).val.map fun x : ZMod p ↦
+    legendreSym p
+      ((a1 * x.val + a3) ^ 2
+        + 4 * (x.val ^ 3 + a2 * x.val ^ 2 + a4 * x.val + a6))
+      + 1)
+
+-- Sum over the multiset to get the final result
+def compute_ap' (p : ℕ) (h : Fact p.Prime) (a1 a2 a3 a4 a6 : ℤ) : ℤ :=
+  letI := h
+  (((Finset.univ : Finset (ZMod p)).val.map
+    (fun x : ZMod p ↦
+      legendreSym p
+        ((a1 * x.val + a3) ^ 2
+          + 4 * (x.val ^ 3 + a2 * x.val ^ 2 + a4 * x.val + a6))
+        + 1)).sum)
 
 def ex1 := @legendreSym 19 (by decide) 120
 #eval ex1
