@@ -13,7 +13,16 @@ def compute_ap (p : ℕ) (h : Fact p.Prime) (a1 a2 a3 a4 a6 : ℤ) := (Finset.un
   letI y := xy.2
   y ^ 2 + a1 * x * y + a3 * y = x ^ 3 + a2 * x^2 + a4 * x + a6).card
 
-theorem bar3 : compute_ap 29 (by decide) 1 0 0 (-784) (-8515) = 31 := by decide
+-- the forward image is a set, not a multiset...
+def compute_ap' (p : ℕ) (h : Fact p.Prime) (a1 a2 a3 a4 a6 : ℤ) : Finset ℤ :=
+  (Finset.univ.image fun x : (ZMod p) ↦
+    (legendreSym p ((a1 * x.val + a3) ^ 2 + 4 * (x.val ^ 3 + a2 * x.val ^ 2 + a4 * x.val + a6))) + 1)
+
+def ex1 := @legendreSym 19 (by decide) 120
+#eval ex1
+#eval compute_ap' 29 (by decide) 1 0 0 (-784) (-8515)
+
+theorem bar3 : compute_ap' 29 (by decide) 1 0 0 (-784) (-8515) = 31 := by decide +kernel
 
 open Polynomial
 
