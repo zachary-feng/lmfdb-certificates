@@ -45,6 +45,21 @@ def p_is_split_multiplicative (p : ℕ) (h : Fact p.Prime)
   letI c6 := -b2 ^ 3 + 36 * b2 * b4 - 216 * b6
   decide ((p : ℤ) ∣ E.Δ) ∧ (¬ (p : ℤ) ∣ c4) ∧ (legendreSym p (-c6) = 1)
 
+def p_is_non_split_multiplicative (p : ℕ) (h : Fact p.Prime)
+    (a1 a2 a3 a4 a6 : ℤ) : Bool :=
+  letI E : WeierstrassCurve ℤ :=
+    { a₁ := a1
+      a₂ := a2
+      a₃ := a3
+      a₄ := a4
+      a₆ := a6 }
+  letI b2 := a1 ^ 2 + 4 * a2
+  letI b4 := a1 * a3 + 2 * a4
+  letI b6 := a3 ^ 2 + 4 * a6
+  letI c4 := b2 ^ 2 - 24 * b4
+  letI c6 := -b2 ^ 3 + 36 * b2 * b4 - 216 * b6
+  decide ((p : ℤ) ∣ E.Δ) ∧ (¬ (p : ℤ) ∣ c4) ∧ (legendreSym p (-c6) = -1)
+
 -- Isogeny class: 21.a
 -- Weierstrass curve: 21.a1
 -- ⟨1, 0, 0, -784, -8515⟩
@@ -72,14 +87,6 @@ theorem foo2 : p_is_good 29 (by decide) 1 0 0 (-784) (-8515) ∧
 
 -- p = 7 is a bad prime for this curve, non-split multiplicative reduction
 
+#eval p_is_non_split_multiplicative 7 (by decide) 1 0 0 (-784) (-8515)
+
 -- CONTINUE HERE...
-
-
-
--- Below here are some tests...
-
-def ex1 := @legendreSym 19 (by decide) 120
-#eval ex1
-#eval compute_points_mod_p' 29 (by decide) 1 0 0 (-784) (-8515)
-
-theorem bar3 : compute_points_mod_p' 29 (by decide) 1 0 0 (-784) (-8515) = 31 := by decide +kernel
