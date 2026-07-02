@@ -55,82 +55,49 @@ def compute_points_mod_p'_sum (p : ℕ) (h : Fact p.Prime) (a1 a2 a3 a4 a6 : ℤ
 theorem compute_points_methods_equivalent (p : ℕ) (h : Fact p.Prime) (h2 : p ≠ 2) (a1 a2 a3 a4 a6 : ℤ) :
   compute_points_mod_p_sum p h a1 a2 a3 a4 a6 = compute_points_mod_p'_sum p h a1 a2 a3 a4 a6 := by
   rw [compute_points_mod_p_sum, compute_points_mod_p'_sum]
-  apply Finset.sum_congr
-  · trivial
-  · intro x _
-    rw [← legendreSym.card_sqrts p h2 (((a1 * ↑x.val + a3) ^ 2 + 4 * (↑x.val ^ 3 + a2 * ↑x.val ^ 2 + a4 * ↑x.val + a6)))]
-    have complete_square (y1 : ZMod p) : 4 * (y1^2 + ↑ a1 * x * y1 + ↑ a3 * y1 - (x ^ 3 + ↑ a2 * x ^ 2 + ↑ a4 * x + ↑ a6)) =
-    (2 * y1 + (↑ a1 * x + ↑ a3)) ^ 2 - ((↑ a1 * x + ↑ a3) ^ 2 + 4 * (x ^ 3 + ↑ a2 * x ^ 2 + ↑ a4 * x + ↑ a6)) :=
-    by ring
-    rw [Nat.cast_inj]
-        -- prerequisites (needed only for step 2, since it divides the 4 back out)
-    have hp : Nat.Prime p := Fact.out
-    have two_ne : (2 : ZMod p) ≠ 0 := by
-      have hnd : ¬ (p ∣ 2) := fun hd => h2 ((Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp hd)
-      intro hc; exact hnd ((CharP.cast_eq_zero_iff (ZMod p) p 2).mp (by exact_mod_cast hc))
-    have four_ne : (4 : ZMod p) ≠ 0 := by
-      have h4 : (4 : ZMod p) = 2 * 2 := by norm_num
-      rw [h4]; exact mul_ne_zero two_ne two_ne
-    -- STEP 1:   A = B   ↦   A - B = 0
-    rw [show (Finset.univ.filter (fun y : ZMod p =>
-              y ^ 2 + ↑a1 * x * y + ↑a3 * y = x ^ 3 + ↑a2 * x ^ 2 + ↑a4 * x + ↑a6))
-          = Finset.univ.filter (fun y : ZMod p =>
-              y ^ 2 + ↑a1 * x * y + ↑a3 * y - (x ^ 3 + ↑a2 * x ^ 2 + ↑a4 * x + ↑a6) = 0)
-        from by apply Finset.filter_congr; intro y _; rw [sub_eq_zero]]
-
-    -- STEP 2:   A - B = 0   ↦   4 * (A - B) = 0
-    rw [show (Finset.univ.filter (fun y : ZMod p =>
-              y ^ 2 + ↑a1 * x * y + ↑a3 * y - (x ^ 3 + ↑a2 * x ^ 2 + ↑a4 * x + ↑a6) = 0))
-          = Finset.univ.filter (fun y : ZMod p =>
-              4 * (y ^ 2 + ↑a1 * x * y + ↑a3 * y - (x ^ 3 + ↑a2 * x ^ 2 + ↑a4 * x + ↑a6)) = 0)
-        from by apply Finset.filter_congr; intro y _; rw [mul_eq_zero]; simp [four_ne]]
-    have hD : ((((a1 * (x.val : ℤ) + a3) ^ 2
-              + 4 * ((x.val : ℤ) ^ 3 + a2 * (x.val : ℤ) ^ 2 + a4 * (x.val : ℤ) + a6)) : ZMod p))
-        = (↑a1 * x + ↑a3) ^ 2 + 4 * (x ^ 3 + ↑a2 * x ^ 2 + ↑a4 * x + ↑a6) := by
-      push_cast [ZMod.natCast_val, ZMod.cast_id]; ring
-
-    -- STEP 3:  complete the square:  4 * (A - B) = 0  ↦  (2y + (a1·x + a3))² - disc = 0
-    rw [show (Finset.univ.filter (fun y : ZMod p =>
-              4 * (y ^ 2 + ↑a1 * x * y + ↑a3 * y - (x ^ 3 + ↑a2 * x ^ 2 + ↑a4 * x + ↑a6)) = 0))
-          = Finset.univ.filter (fun y : ZMod p =>
-              (2 * y + (↑a1 * x + ↑a3)) ^ 2
-                - (((a1 * (x.val : ℤ) + a3) ^ 2
-                    + 4 * ((x.val : ℤ) ^ 3 + a2 * (x.val : ℤ) ^ 2 + a4 * (x.val : ℤ) + a6)) : ZMod p) = 0)
-        from by
-          apply Finset.filter_congr; intro y _
-          rw [show 4 * (y ^ 2 + ↑a1 * x * y + ↑a3 * y - (x ^ 3 + ↑a2 * x ^ 2 + ↑a4 * x + ↑a6))
-                = (2 * y + (↑a1 * x + ↑a3)) ^ 2
-                    - (((a1 * (x.val : ℤ) + a3) ^ 2
-                        + 4 * ((x.val : ℤ) ^ 3 + a2 * (x.val : ℤ) ^ 2 + a4 * (x.val : ℤ) + a6)) : ZMod p)
-              from by rw [hD]; ring]]
-        -- STEP 4:  (2y+c)² - disc = 0   ↦   (2y+c)² = disc
-    rw [show (Finset.univ.filter (fun y : ZMod p =>
-              (2 * y + (↑a1 * x + ↑a3)) ^ 2
-                - (((a1 * (x.val : ℤ) + a3) ^ 2
-                    + 4 * ((x.val : ℤ) ^ 3 + a2 * (x.val : ℤ) ^ 2 + a4 * (x.val : ℤ) + a6)) : ZMod p) = 0))
-          = Finset.univ.filter (fun y : ZMod p =>
-              (2 * y + (↑a1 * x + ↑a3)) ^ 2
-                = (((a1 * (x.val : ℤ) + a3) ^ 2
-                    + 4 * ((x.val : ℤ) ^ 3 + a2 * (x.val : ℤ) ^ 2 + a4 * (x.val : ℤ) + a6)) : ZMod p))
-        from by apply Finset.filter_congr; intro y _; rw [sub_eq_zero]]
-    -- BIJECTION  y ↦ 2y + c   (inverse z ↦ (z - c)/2)
-    refine Finset.card_nbij'
-        (fun y => 2 * y + (↑a1 * x + ↑a3))
-        (fun z => (z - (↑a1 * x + ↑a3)) / 2) ?_ ?_ ?_ ?_
-    · intro y hy
-      simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_univ, true_and,
-        Set.mem_toFinset, Set.mem_setOf_eq] at hy ⊢
-      exact_mod_cast hy
-    · intro z hz
-      simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_univ, true_and,
-        Set.mem_toFinset, Set.mem_setOf_eq] at hz ⊢
-      rw [mul_div_cancel₀ _ two_ne, sub_add_cancel]; exact_mod_cast hz
-    · intro y _
-      change (2 * y + (↑a1 * x + ↑a3) - (↑a1 * x + ↑a3)) / 2 = y
-      field_simp; ring
-    · intro z _
-      change 2 * ((z - (↑a1 * x + ↑a3)) / 2) + (↑a1 * x + ↑a3) = z
-      rw [mul_div_cancel₀ _ two_ne]; ring
+  -- Reduce to the per-x identity  #{y : Weierstrass eqn} = legendreSym p (discriminant) + 1.
+  apply Finset.sum_congr rfl
+  intro x _
+  rw [← legendreSym.card_sqrts p h2
+        ((a1 * ↑x.val + a3) ^ 2 + 4 * (↑x.val ^ 3 + a2 * ↑x.val ^ 2 + a4 * ↑x.val + a6)),
+      Nat.cast_inj]
+  -- `2 ≠ 0` and `4 ≠ 0` in `ZMod p` — the only place `p ≠ 2` is used.
+  have hp : Nat.Prime p := Fact.out
+  have two_ne : (2 : ZMod p) ≠ 0 := by
+    have hnd : ¬ (p ∣ 2) := fun hd => h2 ((Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp hd)
+    intro hc; exact hnd ((CharP.cast_eq_zero_iff (ZMod p) p 2).mp (by exact_mod_cast hc))
+  have four_ne : (4 : ZMod p) ≠ 0 := by
+    have h4 : (4 : ZMod p) = 2 * 2 := by norm_num
+    rw [h4]; exact mul_ne_zero two_ne two_ne
+  -- Completing the square is the bijection  y ↦ 2y + (a₁x + a₃)  between solutions of the
+  -- Weierstrass equation in y and square roots of the discriminant (inverse z ↦ (z - c)/2).
+  refine Finset.card_nbij'
+      (fun y => 2 * y + (↑a1 * x + ↑a3))
+      (fun z => (z - (↑a1 * x + ↑a3)) / 2) ?_ ?_ ?_ ?_
+  · -- a solution y yields a square root 2y + c of the discriminant
+    intro y hy
+    simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_univ, true_and,
+      Set.mem_toFinset, Set.mem_setOf_eq] at hy ⊢
+    push_cast [ZMod.natCast_val, ZMod.cast_id]
+    linear_combination 4 * hy
+  · -- a square root z yields back a solution (z - c)/2
+    intro z hz
+    simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_univ, true_and,
+      Set.mem_toFinset, Set.mem_setOf_eq] at hz ⊢
+    push_cast [ZMod.natCast_val, ZMod.cast_id] at hz
+    set w := (z - (↑a1 * x + ↑a3)) / 2 with hw_def
+    have hw : 2 * w = z - (↑a1 * x + ↑a3) := by rw [hw_def]; exact mul_div_cancel₀ _ two_ne
+    have key : 4 * (w ^ 2 + ↑a1 * x * w + ↑a3 * w)
+             = 4 * (x ^ 3 + ↑a2 * x ^ 2 + ↑a4 * x + ↑a6) := by
+      linear_combination hz + (2 * w + (↑a1 * x + ↑a3) + z) * hw
+    exact mul_left_cancel₀ four_ne key
+  · -- the two maps are mutually inverse
+    intro y _
+    change (2 * y + (↑a1 * x + ↑a3) - (↑a1 * x + ↑a3)) / 2 = y
+    field_simp; ring
+  · intro z _
+    change 2 * ((z - (↑a1 * x + ↑a3)) / 2) + (↑a1 * x + ↑a3) = z
+    rw [mul_div_cancel₀ _ two_ne]; ring
 
 
 noncomputable def L_factor_at_p_good (p : ℕ) (h : Fact p.Prime) (a1 a2 a3 a4 a6 : ℤ) : ℤ[X]:=
