@@ -71,7 +71,6 @@ theorem compute_points_methods_equivalent (p : ℕ) (h : Fact p.Prime) (h2 : p �
     have four_ne : (4 : ZMod p) ≠ 0 := by
       have h4 : (4 : ZMod p) = 2 * 2 := by norm_num
       rw [h4]; exact mul_ne_zero two_ne two_ne
-
     -- STEP 1:   A = B   ↦   A - B = 0
     rw [show (Finset.univ.filter (fun y : ZMod p =>
               y ^ 2 + ↑a1 * x * y + ↑a3 * y = x ^ 3 + ↑a2 * x ^ 2 + ↑a4 * x + ↑a6))
@@ -104,18 +103,34 @@ theorem compute_points_methods_equivalent (p : ℕ) (h : Fact p.Prime) (h2 : p �
                     - (((a1 * (x.val : ℤ) + a3) ^ 2
                         + 4 * ((x.val : ℤ) ^ 3 + a2 * (x.val : ℤ) ^ 2 + a4 * (x.val : ℤ) + a6)) : ZMod p)
               from by rw [hD]; ring]]
-
-
-
-
-
-
-
-
-
-
-
-
+        -- STEP 4:  (2y+c)² - disc = 0   ↦   (2y+c)² = disc
+    rw [show (Finset.univ.filter (fun y : ZMod p =>
+              (2 * y + (↑a1 * x + ↑a3)) ^ 2
+                - (((a1 * (x.val : ℤ) + a3) ^ 2
+                    + 4 * ((x.val : ℤ) ^ 3 + a2 * (x.val : ℤ) ^ 2 + a4 * (x.val : ℤ) + a6)) : ZMod p) = 0))
+          = Finset.univ.filter (fun y : ZMod p =>
+              (2 * y + (↑a1 * x + ↑a3)) ^ 2
+                = (((a1 * (x.val : ℤ) + a3) ^ 2
+                    + 4 * ((x.val : ℤ) ^ 3 + a2 * (x.val : ℤ) ^ 2 + a4 * (x.val : ℤ) + a6)) : ZMod p))
+        from by apply Finset.filter_congr; intro y _; rw [sub_eq_zero]]
+    -- BIJECTION  y ↦ 2y + c   (inverse z ↦ (z - c)/2)
+    refine Finset.card_nbij'
+        (fun y => 2 * y + (↑a1 * x + ↑a3))
+        (fun z => (z - (↑a1 * x + ↑a3)) / 2) ?_ ?_ ?_ ?_
+    · intro y hy
+      simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_univ, true_and,
+        Set.mem_toFinset, Set.mem_setOf_eq] at hy ⊢
+      exact_mod_cast hy
+    · intro z hz
+      simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_univ, true_and,
+        Set.mem_toFinset, Set.mem_setOf_eq] at hz ⊢
+      rw [mul_div_cancel₀ _ two_ne, sub_add_cancel]; exact_mod_cast hz
+    · intro y _
+      change (2 * y + (↑a1 * x + ↑a3) - (↑a1 * x + ↑a3)) / 2 = y
+      field_simp; ring
+    · intro z _
+      change 2 * ((z - (↑a1 * x + ↑a3)) / 2) + (↑a1 * x + ↑a3) = z
+      rw [mul_div_cancel₀ _ two_ne]; ring
 
 
 noncomputable def L_factor_at_p_good (p : ℕ) (h : Fact p.Prime) (a1 a2 a3 a4 a6 : ℤ) : ℤ[X]:=
