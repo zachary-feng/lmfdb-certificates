@@ -167,3 +167,15 @@ theorem foo0 : (E.baseChange ℚ_[p]).HasGoodReduction ℤ_[p] ↔ p_is_good p (
   have hΔ : (E.baseChange ℤ_[p]).Δ = (E.Δ : ℤ_[p]) := by simp
   rw [← hbc, WeierstrassCurve.hasGoodReduction_baseChange_iff, hΔ, not_iff_not,
     IsLocalRing.mem_maximalIdeal, PadicInt.mem_nonunits, PadicInt.norm_int_lt_one_iff_dvd]
+
+
+instance : Fact (Nat.Prime 29) := by decide
+
+theorem foo1 : (E.baseChange ℚ_[29]).HasGoodReduction ℤ_[29] ∧ L_factor_at_p_good 29 (by decide)
+  = 1 + C (2 : ℤ) * X + C (29 : ℤ) * X ^ 2 := by
+    constructor
+    · rw [foo0]
+      decide
+    · unfold L_factor_at_p_good
+      polynomial_nf
+      rfl
