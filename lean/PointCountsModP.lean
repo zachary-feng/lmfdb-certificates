@@ -52,7 +52,8 @@ def compute_points_mod_p'_sum (p : ℕ) (h : Fact p.Prime) (a1 a2 a3 a4 a6 : ℤ
 #eval compute_points_mod_p'_sum 157 (by decide) 1 0 0 (-784) (-8515)
 
 
-theorem compute_points_methods_equivalent (p : ℕ) (h : Fact p.Prime) (h2 : p ≠ 2) (a1 a2 a3 a4 a6 : ℤ) :
+theorem compute_points_methods_equivalent (p : ℕ) (h : Fact p.Prime)
+  (h2 : p ≠ 2) (a1 a2 a3 a4 a6 : ℤ) :
   compute_points_mod_p_sum p h a1 a2 a3 a4 a6 = compute_points_mod_p'_sum p h a1 a2 a3 a4 a6 := by
   rw [compute_points_mod_p_sum, compute_points_mod_p'_sum]
   -- Reduce to the per-x identity  #{y : Weierstrass eqn} = legendreSym p (discriminant) + 1.
