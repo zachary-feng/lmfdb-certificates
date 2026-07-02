@@ -19,6 +19,36 @@ def compute_points_mod_p'_sum (p : ℕ) (h : Fact p.Prime) (a1 a2 a3 a4 a6 : ℤ
 #eval compute_points_mod_p'_sum 157 (by decide) 1 0 0 (-784) (-8515)
 
 
+/-- **Counting roots of a quadratic via its discriminant.**  Over a finite field `F` in which
+`2 ≠ 0`, completing the square — `y ↦ 2a·y + b` — is a bijection between the roots of
+`a·y² + b·y + c` and the square roots of the discriminant `b² - 4ac`, so the two solution sets
+have the same cardinality. -/
+theorem card_quadratic_roots_eq_card_sqrts_discrim {F : Type*} [Field F] [Fintype F]
+    [DecidableEq F] (h2 : (2 : F) ≠ 0) {a : F} (ha : a ≠ 0) (b c : F) :
+    {y : F | a * y ^ 2 + b * y + c = 0}.toFinset.card
+      = {z : F | z ^ 2 = discrim a b c}.toFinset.card := by
+  haveI : NeZero (2 : F) := ⟨h2⟩
+  have h2a : 2 * a ≠ 0 := mul_ne_zero h2 ha
+  refine Finset.card_nbij' (fun y => 2 * a * y + b) (fun z => (z - b) / (2 * a)) ?_ ?_ ?_ ?_
+  · -- a root `y` yields the square root `2a·y + b` of the discriminant
+    intro y hy
+    simp only [Finset.mem_coe, Set.mem_toFinset, Set.mem_setOf_eq] at hy ⊢
+    exact ((quadratic_eq_zero_iff_discrim_eq_sq ha y).mp (by linear_combination hy)).symm
+  · -- a square root `z` yields back the root `(z - b) / 2a`
+    intro z hz
+    simp only [Finset.mem_coe, Set.mem_toFinset, Set.mem_setOf_eq] at hz ⊢
+    have hzz : 2 * a * ((z - b) / (2 * a)) + b = z := by rw [mul_div_cancel₀ _ h2a]; ring
+    have key := (quadratic_eq_zero_iff_discrim_eq_sq ha ((z - b) / (2 * a))).mpr
+      (by rw [hzz, hz])
+    linear_combination key
+  · -- the two maps are mutually inverse
+    intro y _
+    field_simp
+    ring
+  · intro z _
+    field_simp
+    ring
+
 theorem compute_points_methods_equivalent (p : ℕ) (h : Fact p.Prime)
   (h2 : p ≠ 2) (a1 a2 a3 a4 a6 : ℤ) :
   compute_points_mod_p_sum p h a1 a2 a3 a4 a6 = compute_points_mod_p'_sum p h a1 a2 a3 a4 a6 := by
@@ -26,46 +56,28 @@ theorem compute_points_methods_equivalent (p : ℕ) (h : Fact p.Prime)
   -- Reduce to the per-x identity  #{y : Weierstrass eqn} = legendreSym p (discriminant) + 1.
   apply Finset.sum_congr rfl
   intro x _
+  -- `p ≠ 2` enters only here and through `legendreSym.card_sqrts`.
+  have two_ne : (2 : ZMod p) ≠ 0 := Ring.two_ne_zero ((ZMod.ringChar_zmod_n p).substr h2)
   rw [← legendreSym.card_sqrts p h2
         ((a1 * ↑x.val + a3) ^ 2 + 4 * (↑x.val ^ 3 + a2 * ↑x.val ^ 2 + a4 * ↑x.val + a6)),
       Nat.cast_inj]
-  -- `2 ≠ 0` and `4 ≠ 0` in `ZMod p` — the only place `p ≠ 2` is used.
-  have hp : Nat.Prime p := Fact.out
-  have two_ne : (2 : ZMod p) ≠ 0 := by
-    have hnd : ¬ (p ∣ 2) := fun hd => h2 ((Nat.prime_dvd_prime_iff_eq hp Nat.prime_two).mp hd)
-    intro hc; exact hnd ((CharP.cast_eq_zero_iff (ZMod p) p 2).mp (by exact_mod_cast hc))
-  have four_ne : (4 : ZMod p) ≠ 0 := by
-    have h4 : (4 : ZMod p) = 2 * 2 := by norm_num
-    rw [h4]; exact mul_ne_zero two_ne two_ne
-  -- Completing the square is the bijection  y ↦ 2y + (a₁x + a₃)  between solutions of the
-  -- Weierstrass equation in y and square roots of the discriminant (inverse z ↦ (z - c)/2).
-  refine Finset.card_nbij'
-      (fun y => 2 * y + (↑a1 * x + ↑a3))
-      (fun z => (z - (↑a1 * x + ↑a3)) / 2) ?_ ?_ ?_ ?_
-  · -- a solution y yields a square root 2y + c of the discriminant
-    intro y hy
-    simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_univ, true_and,
-      Set.mem_toFinset, Set.mem_setOf_eq] at hy ⊢
+  -- The fibre over `x` is the root set of the monic quadratic  y² + (a₁x + a₃)y - RHS  in `y`.
+  have hquad : {y ∈ (Finset.univ : Finset (ZMod p)) |
+        y ^ 2 + ↑a1 * x * y + ↑a3 * y = x ^ 3 + ↑a2 * x ^ 2 + ↑a4 * x + ↑a6}
+      = {y : ZMod p | 1 * y ^ 2 + (↑a1 * x + ↑a3) * y
+          + -(x ^ 3 + ↑a2 * x ^ 2 + ↑a4 * x + ↑a6) = 0}.toFinset := by
+    ext y
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, Set.mem_toFinset, Set.mem_setOf_eq]
+    constructor <;> intro hy <;> linear_combination hy
+  rw [hquad, card_quadratic_roots_eq_card_sqrts_discrim two_ne one_ne_zero]
+  -- The quadratic's discriminant is the cast of the integer discriminant of the curve at `x`.
+  have hdisc : discrim (1 : ZMod p) (↑a1 * x + ↑a3) (-(x ^ 3 + ↑a2 * x ^ 2 + ↑a4 * x + ↑a6))
+      = (((a1 * ↑x.val + a3) ^ 2
+          + 4 * (↑x.val ^ 3 + a2 * ↑x.val ^ 2 + a4 * ↑x.val + a6) : ℤ) : ZMod p) := by
+    rw [discrim]
     push_cast [ZMod.natCast_val, ZMod.cast_id]
-    linear_combination 4 * hy
-  · -- a square root z yields back a solution (z - c)/2
-    intro z hz
-    simp only [Finset.mem_coe, Finset.mem_filter, Finset.mem_univ, true_and,
-      Set.mem_toFinset, Set.mem_setOf_eq] at hz ⊢
-    push_cast [ZMod.natCast_val, ZMod.cast_id] at hz
-    set w := (z - (↑a1 * x + ↑a3)) / 2 with hw_def
-    have hw : 2 * w = z - (↑a1 * x + ↑a3) := by rw [hw_def]; exact mul_div_cancel₀ _ two_ne
-    have key : 4 * (w ^ 2 + ↑a1 * x * w + ↑a3 * w)
-             = 4 * (x ^ 3 + ↑a2 * x ^ 2 + ↑a4 * x + ↑a6) := by
-      linear_combination hz + (2 * w + (↑a1 * x + ↑a3) + z) * hw
-    exact mul_left_cancel₀ four_ne key
-  · -- the two maps are mutually inverse
-    intro y _
-    change (2 * y + (↑a1 * x + ↑a3) - (↑a1 * x + ↑a3)) / 2 = y
-    field_simp; ring
-  · intro z _
-    change 2 * ((z - (↑a1 * x + ↑a3)) / 2) + (↑a1 * x + ↑a3) = z
-    rw [mul_div_cancel₀ _ two_ne]; ring
+    ring
+  rw [hdisc]
 
 def E : WeierstrassCurve ℤ where
   a₁ := 1
