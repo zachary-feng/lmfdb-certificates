@@ -4,13 +4,24 @@ open Polynomial
 set_option maxRecDepth 10000
 -- Define Weierstrass curve E : y^2 + a₁xy + a₃y = x^3 + a₂x^2 + a₄x + a₆ over ℤ
 
-def E : WeierstrassCurve ℤ where
-  a₁ := 1
-  a₂ := 0
-  a₃ := 0
-  a₄ := -784
-  a₆ := -8515
+def E : WeierstrassCurve ℤ := ⟨ 1, 0, 0, -784, -8515⟩
+
 -- Compute the number of points on E over the finite field 𝔽ₚ using two different methods
+structure euler_factor where
+  p : ℕ
+  c2 : ℤ
+  [h : Fact p.Prime]
+
+
+def euler_factors : List euler_factor :=  [euler_factor.mk 5 2 (h := by decide),
+euler_factor.mk 11 (-4) (h := by decide)]
+
+
+/-
+def euler_factors : List euler_factor :=  [⟨5, 2, (by decide)⟩,
+⟨11, -4, (by decide)⟩, ⟨13, 2, (by decide)⟩, ⟨17, 6, (by decide)⟩,
+⟨19, -4, (by decide)⟩, ⟨23, 0, (by decide)⟩]
+-/
 
 def compute_points_mod_p_sum (p : ℕ) (h : Fact p.Prime) : ℕ :=
   ∑ x : (ZMod p),
@@ -169,13 +180,27 @@ theorem foo0 : (E.baseChange ℚ_[p]).HasGoodReduction ℤ_[p] ↔ p_is_good p (
     IsLocalRing.mem_maximalIdeal, PadicInt.mem_nonunits, PadicInt.norm_int_lt_one_iff_dvd]
 
 
-instance : Fact (Nat.Prime 29) := by decide
+-- instance : Fact (Nat.Prime p_in_place) := by decide
 
-theorem foo1 : (E.baseChange ℚ_[29]).HasGoodReduction ℤ_[29] ∧ L_factor_at_p_good 29 (by decide)
-  = 1 + C (2 : ℤ) * X + C (29 : ℤ) * X ^ 2 := by
+
+theorem loop_foo1 : ∀ x ∈ euler_factors, (E.baseChange (@Padic x.p x.h)).HasGoodReduction (@PadicInt x.p x.h)
+  ∧ (L_factor_at_p_good x.p (x.h)
+  = 1 + C (x.c2 : ℤ) * X + C (x.p : ℤ) * X ^ 2) := by
     constructor
     · rw [foo0]
       decide
     · unfold L_factor_at_p_good
       polynomial_nf
       rfl
+
+/-
+theorem foo1 : (E.baseChange ℚ_[p_in_place]).HasGoodReduction ℤ_[p_in_place]
+  ∧ L_factor_at_p_good p_in_place (by decide)
+  = 1 + C (c2_in_place : ℤ) * X + C (p_in_place : ℤ) * X ^ 2 := by
+    constructor
+    · rw [foo0]
+      decide
+    · unfold L_factor_at_p_good
+      polynomial_nf
+      rfl
+-/
